@@ -1,0 +1,52 @@
+import numpy as np
+import gym
+
+# Create the FrozenLake environment
+env = gym.make('FrozenLake-v1')
+
+# Initialize Q-table with all zeros
+num_states = env.observation_space.n
+num_actions = env.action_space.n
+Q = np.zeros((num_states, num_actions))
+
+# Hyperparameters
+learning_rate = 0.1
+discount_factor = 0.99
+num_episodes = 10000
+
+for episode in range(num_episodes):
+    state = env.reset()
+    done = False
+    
+    while not done:
+        # Choose an action using epsilon-greedy policy
+        if np.random.rand() < 0.1:
+            action = env.action_space.sample()  # Explore
+        else:
+            action = np.argmax(Q[state, :])  # Exploit
+        
+        # Take the chosen action and observe the next state and reward
+        next_state, reward, done, _ = env.step(action)
+        
+        # Update the Q-table using the Q-learning update rule
+        Q[state, action] = Q[state, action] + learning_rate * (reward + discount_factor * np.max(Q[next_state, :]) - Q[state, action])
+        
+        state = next_state
+
+# Evaluate the learned Q-table
+num_eval_episodes = 100
+num_wins = 0
+
+for _ in range(num_eval_episodes):
+    state = env.reset()
+    done = False
+    
+    while not done:
+        action = np.argmax(Q[state, :])  # Choose the best action
+        next_state, reward, done, _ = env.step(action)
+        state = next_state
+        
+        if done and reward == 1:
+            num_wins += 1
+
+print(f"Winning rate over {num_eval_episodes} episodes: {num_wins / num_eval_episodes:.2%}")
