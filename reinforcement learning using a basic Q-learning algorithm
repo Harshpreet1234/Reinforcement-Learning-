@@ -1,0 +1,85 @@
+import numpy as np
+
+# Define the environment as a 3x3 grid
+env = np.array([['S', ' ', ' '],
+                [' ', 'W', ' '],
+                [' ', ' ', 'G']])
+
+# Define actions (up, down, left, right)
+actions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
+
+# Define the rewards for each state
+rewards = {
+    'S': {'UP': -1, 'DOWN': -1, 'LEFT': -1, 'RIGHT': -1},
+    'W': {'UP': -10, 'DOWN': -10, 'LEFT': -10, 'RIGHT': -10},
+    'G': {'UP': 10, 'DOWN': 10, 'LEFT': 10, 'RIGHT': 10}
+}
+
+# Initialize the Q-table
+Q = np.zeros((3, 3, len(actions)))
+
+# Define hyperparameters
+learning_rate = 0.1
+discount_factor = 0.9
+num_episodes = 1000
+
+# Q-learning algorithm
+for episode in range(num_episodes):
+    state = (0, 0)  # Starting state (S)
+    while True:
+        # Choose an action using epsilon-greedy policy
+        epsilon = 0.1  # Exploration rate
+        if np.random.rand() < epsilon:
+            action = np.random.choice(actions)
+        else:
+            action = actions[np.argmax(Q[state])]
+
+        # Take the chosen action and observe the next state and reward
+        if action == 'UP':
+            next_state = (max(state[0] - 1, 0), state[1])
+        elif action == 'DOWN':
+            next_state = (min(state[0] + 1, 2), state[1])
+        elif action == 'LEFT':
+            next_state = (state[0], max(state[1] - 1, 0))
+        elif action == 'RIGHT':
+            next_state = (state[0], min(state[1] + 1, 2))
+        
+        reward = rewards[env[state]][action]
+
+        # Update the Q-value using the Q-learning update rule
+        Q[state][actions.index(action)] += learning_rate * (reward + discount_factor * np.max(Q[next_state]) - Q[state][actions.index(action)])
+
+        # Move to the next state
+        state = next_state
+
+        # Check if the episode is finished (reached the goal)
+        if env[state] == 'G':
+            break
+
+# After training, let's see the learned policy
+state = (0, 0)  # Starting state (S)
+path = [state]
+while env[state] != 'G':
+    action = actions[np.argmax(Q[state])]
+    if action == 'UP':
+        next_state = (max(state[0] - 1, 0), state[1])
+    elif action == 'DOWN':
+        next_state = (min(state[0] + 1, 2), state[1])
+    elif action == 'LEFT':
+        next_state = (state[0], max(state[1] - 1, 0))
+    elif action == 'RIGHT':
+        next_state = (state[0], min(state[1] + 1, 2))
+    path.append(next_state)
+    state = next_state
+
+# Print the learned path
+for row in env:
+    print(' '.join(row))
+print("\nLearned path:")
+for row in range(3):
+    for col in range(3):
+        if (row, col) in path:
+            print('X', end=' ')
+        else:
+            print(' ', end=' ')
+    print()
